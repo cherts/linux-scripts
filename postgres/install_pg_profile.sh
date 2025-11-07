@@ -5,7 +5,7 @@
 #
 # Author: Mikhail Grigorev <sleuthhound at gmail dot com>
 # 
-# Current Version: 1.0.4
+# Current Version: 1.0.5
 #
 # License:
 #  This program is distributed in the hope that it will be useful,
@@ -26,7 +26,7 @@ SCRIPT_NAME=$(basename $0)
 ENABLE_DEBUG=0
 PG_STAT_KCACHE_GIT_VER=REL2_3_0
 PG_WAIT_SAMPLING_VER=v1.1.8
-PG_PROFILE_GIT_VER=4.10
+PG_PROFILE_GIT_VER=4.11
 PG_CONGIG_PATH=""
 
 _command_exists() {
@@ -124,7 +124,7 @@ _detect_linux_distrib() {
 			OS_DISTRIB="Debian"
 			echo -en "${GREEN}${DIST} ${REV}"
 			case "${REV}" in
-			18.04|20.04|22.04|24.04)
+			18.04|20.04|22.04|24.04|25.04)
 				echo -e " (${PSUEDONAME})${NC}"
 				;;
 			*)

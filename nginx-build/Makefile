@@ -1,0 +1,142 @@
+#
+# Build nginx (use custom openssl via rpath)
+#
+# Author: Eric Pruitt (http://www.codevat.com)
+# Author: Mikhail Grigorev (sleuthhound@gmail.com)
+#
+# License: 2-Clause BSD (http://opensource.org/licenses/BSD-2-Clause)
+#
+
+NGINX_VERSION=1.29.3
+OPENSSL_VERSION=3.5.4
+PCRE2_VERSION=10.47
+ZLIB_VERSION=1.3.1
+
+# URL of nginx source tarball
+NGINX_SOURCE=https://nginx.org/download/nginx-${NGINX_VERSION}.tar.gz
+# URL of OpenSSL source tarball
+OPENSSL_SOURCE=https://www.openssl.org/source/openssl-${OPENSSL_VERSION}.tar.gz
+# URL of PCRE source tarball
+PCRE2_SOURCE=https://github.com/PCRE2Project/pcre2/releases/download/pcre2-${PCRE2_VERSION}/pcre2-${PCRE2_VERSION}.tar.gz
+# URL of zlib source tarball
+ZLIB_SOURCE=https://zlib.net/fossils/zlib-${ZLIB_VERSION}.tar.gz
+
+# Static OpenSSL directory
+OPENSSL_DIR=/opt/openssl3
+
+all: nginx/nginx
+
+amroot:
+	@if [ "$$(id -u)" -ne 0 ]; then \
+		echo "Must be root to install dependencies."; \
+		exit 1; \
+	fi
+
+ifeq (/etc/debian_version, $(wildcard /etc/debian_version))
+deps: amroot
+	apt-get install wget libxslt1-dev libxml2-dev zlib1g-dev libbz2-dev
+else ifeq (/etc/redhat-release, $(wildcard /etc/redhat-release))
+deps: amroot
+	yum -y install wget gcc gcc-c++ make zlib-devel
+else
+deps:
+	echo "Linux distribution not supported; install dependencies manually."
+	exit 1
+endif
+
+clean:
+	rm -rf nginx openssl pcre zlib
+
+nginx.tar.gz:
+	wget -O $@ $(NGINX_SOURCE)
+
+nginx: nginx.tar.gz
+	tar xf $<
+	mv nginx-*/ $@
+	touch $@
+
+pcre.tar.gz:
+	wget -O $@ $(PCRE2_SOURCE)
+
+pcre: pcre.tar.gz
+	tar xf $<
+	mv pcre*/ $@
+	touch $@
+
+openssl.tar.gz:
+	wget -O $@ $(OPENSSL_SOURCE)
+
+openssl: openssl.tar.gz
+	tar xf $<
+	mv openssl*/ $@
+	touch $@
+
+zlib.tar.gz:
+	wget -O $@ $(ZLIB_SOURCE)
+
+zlib: zlib.tar.gz
+	tar xf $<
+	mv zlib*/ $@
+	touch $@
+
+openssl/build:
+	cd openssl && ./config --prefix=$(OPENSSL_DIR) && make && make all install
+	echo "$(OPENSSL_DIR)/lib64" > /etc/ld.so.conf.d/openssl3.conf && ldconfig
+	cd ..
+
+build:
+	mkdir -p $(OPENSSL_DIR)
+
+nginx/nginx: build nginx openssl pcre zlib openssl/build
+	cd nginx && ./configure \
+        --prefix=/etc/nginx \
+        --sbin-path=/usr/sbin/nginx \
+        --modules-path=/usr/lib/nginx/modules \
+        --conf-path=/etc/nginx/nginx.conf \
+        --error-log-path=/var/log/nginx/error.log \
+        --http-log-path=/var/log/nginx/access.log \
+        --pid-path=/var/run/nginx.pid \
+        --lock-path=/var/run/nginx.lock \
+        --http-client-body-temp-path=/var/cache/nginx/client_temp \
+        --http-proxy-temp-path=/var/cache/nginx/proxy_temp \
+        --http-fastcgi-temp-path=/var/cache/nginx/fastcgi_temp \
+        --http-uwsgi-temp-path=/var/cache/nginx/uwsgi_temp \
+        --http-scgi-temp-path=/var/cache/nginx/scgi_temp \
+        --user=nginx \
+        --group=nginx \
+        --with-cc-opt="-O2 -static -static-libgcc" \
+        --with-ld-opt="-L $(OPENSSL_DIR)/lib64 -ldl -Wl,-rpath,$(OPENSSL_DIR)/lib64" \
+        --with-openssl=../openssl \
+        --with-pcre=../pcre \
+        --with-zlib=../zlib \
+        --with-compat \
+        --with-file-aio \
+        --with-threads \
+        --with-poll_module \
+        --with-select_module \
+        --with-http_addition_module \
+        --with-http_auth_request_module \
+        --with-http_dav_module \
+        --with-http_flv_module \
+        --with-http_gunzip_module \
+        --with-http_gzip_static_module \
+        --with-http_mp4_module \
+        --with-http_random_index_module \
+        --with-http_realip_module \
+        --with-http_secure_link_module \
+        --with-http_slice_module \
+        --with-http_ssl_module \
+        --with-http_stub_status_module \
+        --with-http_sub_module \
+        --with-http_v2_module \
+        --with-http_v3_module \
+        --with-mail \
+        --with-mail_ssl_module \
+        --with-stream \
+        --with-stream_realip_module \
+        --with-stream_ssl_module \
+        --with-stream_ssl_preread_module
+	cd nginx && $(MAKE)
+	echo "Build finished, use binary ./nginx/objs/nginx"
+
+.PHONY: all clean cleaner amroot deps

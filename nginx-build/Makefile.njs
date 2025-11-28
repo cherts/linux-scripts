@@ -1,5 +1,5 @@
 #
-# Build nginx (use custom openssl via rpath)
+# Build nginx (use custom openssl via rpath) with image_filter, xslt and njs module
 #
 # Author: Eric Pruitt (http://www.codevat.com)
 # Author: Mikhail Grigorev (sleuthhound@gmail.com)
@@ -8,20 +8,33 @@
 #
 
 NGINX_VERSION=1.29.3
+NJS_VERSION=0.9.4
 OPENSSL_VERSION=3.5.4
 PCRE2_VERSION=10.47
 ZLIB_VERSION=1.3.1
+XSLT_VERSION=1.1
+XSLT_FULL_VERSION=1.1.43
+XML_VERSION=2.9
+XML_FULL_VERSION=2.9.9
 
 # URL of nginx source tarball
 NGINX_SOURCE=https://nginx.org/download/nginx-${NGINX_VERSION}.tar.gz
+# URL of NJS module source tarball
+NJS_SOURCE=https://github.com/nginx/njs/archive/refs/tags/${NJS_VERSION}.tar.gz
+# URL of OuickJS git repo
+QJS_SOURCE=https://github.com/bellard/quickjs
 # URL of OpenSSL source tarball
 OPENSSL_SOURCE=https://www.openssl.org/source/openssl-${OPENSSL_VERSION}.tar.gz
 # URL of PCRE source tarball
 PCRE2_SOURCE=https://github.com/PCRE2Project/pcre2/releases/download/pcre2-${PCRE2_VERSION}/pcre2-${PCRE2_VERSION}.tar.gz
 # URL of zlib source tarball
 ZLIB_SOURCE=https://zlib.net/fossils/zlib-${ZLIB_VERSION}.tar.gz
+# URL of xslt source tarball
+XSLT_SOURCE=https://download.gnome.org/sources/libxslt/$(XSLT_VERSION)/libxslt-$(XSLT_FULL_VERSION).tar.xz
+# URL of xml2 source tarball
+XML_SOURCE=https://download.gnome.org/sources/libxml2/$(XML_VERSION)/libxml2-$(XML_FULL_VERSION).tar.xz
 
-# Static library directory
+# Static lib directory
 LIB_DIR=/opt/local
 
 all: nginx/nginx
@@ -45,7 +58,7 @@ deps:
 endif
 
 clean:
-	rm -rf nginx openssl pcre zlib
+	rm -rf nginx openssl pcre zlib njs quickjs libxslt
 
 nginx.tar.gz:
 	wget -O $@ $(NGINX_SOURCE)
@@ -54,6 +67,46 @@ nginx: nginx.tar.gz
 	tar xf $<
 	mv nginx-*/ $@
 	touch $@
+
+njs.tar.gz:
+	wget -O $@ $(NJS_SOURCE)
+
+njs: njs.tar.gz
+	tar xf $<
+	mv njs-* $@
+	touch $@
+
+quickjs:
+	git clone $(QJS_SOURCE)
+	touch $@
+
+quickjs/build: quickjs
+	cd quickjs && CFLAGS='-fPIC' make
+	cd ..
+
+libxslt.tar.xz:
+	wget -O $@ $(XSLT_SOURCE)
+
+libxslt: libxslt.tar.xz
+	tar xf $<
+	mv libxslt*/ $@
+	touch $@
+
+libxslt/build: libxslt
+	cd libxslt && ./configure --prefix=$(LIB_DIR) --disable-static --without-python && make install
+	cd ..
+
+libxml2.tar.xz:
+	 wget -O $@ $(XML_SOURCE)
+
+libxml2: libxml2.tar.xz
+	tar xf $<
+	mv libxml2*/ $@
+	touch $@
+
+libxml2/build: libxml2
+	cd libxml2 && ./configure --prefix=$(LIB_DIR) --disable-static --without-python && make install
+	cd ..
 
 pcre.tar.gz:
 	wget -O $@ $(PCRE2_SOURCE)
@@ -71,11 +124,6 @@ openssl: openssl.tar.gz
 	mv openssl*/ $@
 	touch $@
 
-openssl/build: openssl
-	cd openssl && ./config --prefix=$(LIB_DIR) && make && make all install
-	echo "$(LIB_DIR)/lib64" > /etc/ld.so.conf.d/openssl3.conf && ldconfig
-	cd ..
-
 zlib.tar.gz:
 	wget -O $@ $(ZLIB_SOURCE)
 
@@ -84,10 +132,16 @@ zlib: zlib.tar.gz
 	mv zlib*/ $@
 	touch $@
 
+openssl/build: openssl
+	cd openssl && ./config --prefix=$(LIB_DIR) && make && make all install
+	echo "$(LIB_DIR)/lib64" > /etc/ld.so.conf.d/openssl3.conf && ldconfig
+	cd ..
+
 build:
 	mkdir -p $(LIB_DIR)
 
-nginx/nginx: build nginx pcre zlib openssl/build
+#nginx/nginx: build nginx njs pcre zlib openssl/build quickjs/build libxslt/build libxml2/build
+nginx/nginx:
 	cd nginx && ./configure \
         --prefix=/etc/nginx \
         --sbin-path=/usr/sbin/nginx \
@@ -104,9 +158,9 @@ nginx/nginx: build nginx pcre zlib openssl/build
         --http-scgi-temp-path=/var/cache/nginx/scgi_temp \
         --user=nginx \
         --group=nginx \
-        --with-cc-opt="-O2 -static -static-libgcc" \
-        --with-ld-opt="-L $(LIB_DIR)/lib64 -ldl -Wl,-rpath,$(LIB_DIR)/lib64" \
-        --with-openssl=../openssl \
+        --with-cc-opt="-O2 -static -static-libgcc -I $(LIB_DIR)/include -I ../quickjs -I $(LIB_DIR)/includ/libxml2" \
+        --with-ld-opt="-L $(LIB_DIR)/lib64 -ldl -Wl,-rpath,$(LIB_DIR)/lib64 -L ../quickjs -L $(LIB_DIR)/lib" \
+        --with-openssl=$(LIB_DIR) \
         --with-pcre=../pcre \
         --with-zlib=../zlib \
         --with-compat \
@@ -114,6 +168,8 @@ nginx/nginx: build nginx pcre zlib openssl/build
         --with-threads \
         --with-poll_module \
         --with-select_module \
+        --with-http_image_filter_module \
+        --with-http_geoip_module \
         --with-http_addition_module \
         --with-http_auth_request_module \
         --with-http_dav_module \
@@ -135,7 +191,10 @@ nginx/nginx: build nginx pcre zlib openssl/build
         --with-stream \
         --with-stream_realip_module \
         --with-stream_ssl_module \
-        --with-stream_ssl_preread_module
+        --with-stream_ssl_preread_module \
+        --with-pcre-jit \
+        --with-http_xslt_module \
+        --add-module=../njs/nginx
 	cd nginx && $(MAKE)
 	echo "Build finished, use binary ./nginx/objs/nginx"
 

@@ -96,8 +96,8 @@ nginx/nginx: build nginx openssl pcre zlib
         --http-scgi-temp-path=/var/cache/nginx/scgi_temp \
         --user=nginx \
         --group=nginx \
-		--with-cc-opt="-O2 -static -static-libgcc" \
-		--with-ld-opt=-static --with-cpu-opt=generic \
+        --with-cc-opt="-O2 -static -static-libgcc" \
+        --with-ld-opt=-static --with-cpu-opt=generic \
         --with-openssl=../openssl \
         --with-pcre=../pcre \
         --with-zlib=../zlib \

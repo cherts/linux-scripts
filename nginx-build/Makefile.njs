@@ -158,7 +158,7 @@ nginx/nginx: build nginx njs pcre zlib openssl/build libxml2/build libxslt/build
         --user=nginx \
         --group=nginx \
         --with-cc-opt="-O2 -static -static-libgcc -I $(LIB_DIR)/include -I ../quickjs -I $(LIB_DIR)/include/libxml2" \
-        --with-ld-opt="-L $(LIB_DIR)/lib64 -ldl -Wl,-rpath,$(LIB_DIR)/lib64 -L ../quickjs -L $(LIB_DIR)/lib" \
+        --with-ld-opt="-L $(LIB_DIR)/lib64 -L ../quickjs -L $(LIB_DIR)/lib -ldl -Wl,-rpath,$(LIB_DIR)/lib64" \
         --with-openssl=$(LIB_DIR) \
         --with-pcre=../pcre \
         --with-zlib=../zlib \

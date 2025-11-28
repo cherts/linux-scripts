@@ -71,6 +71,12 @@ openssl: openssl.tar.gz
 	mv openssl*/ $@
 	touch $@
 
+openssl/build: openssl
+	mkdir -p $(OPENSSL_DIR)
+	cd openssl && ./config --prefix=$(OPENSSL_DIR) && make && make all install
+	echo "$(OPENSSL_DIR)/lib64" > /etc/ld.so.conf.d/openssl3.conf && ldconfig
+	cd ..
+
 zlib.tar.gz:
 	wget -O $@ $(ZLIB_SOURCE)
 
@@ -79,15 +85,7 @@ zlib: zlib.tar.gz
 	mv zlib*/ $@
 	touch $@
 
-openssl/build:
-	cd openssl && ./config --prefix=$(OPENSSL_DIR) && make && make all install
-	echo "$(OPENSSL_DIR)/lib64" > /etc/ld.so.conf.d/openssl3.conf && ldconfig
-	cd ..
-
-build:
-	mkdir -p $(OPENSSL_DIR)
-
-nginx/nginx: build nginx openssl pcre zlib openssl/build
+nginx/nginx: nginx pcre zlib openssl/build
 	cd nginx && ./configure \
         --prefix=/etc/nginx \
         --sbin-path=/usr/sbin/nginx \

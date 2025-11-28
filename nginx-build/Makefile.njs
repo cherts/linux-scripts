@@ -140,8 +140,7 @@ openssl/build: openssl
 build:
 	mkdir -p $(LIB_DIR)
 
-#nginx/nginx: build nginx njs pcre zlib openssl/build quickjs/build libxslt/build libxml2/build
-nginx/nginx:
+nginx/nginx: build nginx njs pcre zlib openssl/build quickjs/build libxslt/build libxml2/build
 	cd nginx && ./configure \
         --prefix=/etc/nginx \
         --sbin-path=/usr/sbin/nginx \

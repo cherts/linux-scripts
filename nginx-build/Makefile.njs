@@ -93,7 +93,7 @@ libxslt: libxslt.tar.xz
 	touch $@
 
 libxslt/build: libxslt
-	cd libxslt && ./configure --prefix=$(LIB_DIR) --disable-static --without-python && make install
+	cd libxslt && ./configure --prefix=$(LIB_DIR) --with-libxml-prefix=$(LIB_DIR) --disable-static --without-python && make install
 	cd ..
 
 libxml2.tar.xz:
@@ -140,7 +140,7 @@ zlib: zlib.tar.gz
 build:
 	mkdir -p $(LIB_DIR)
 
-nginx/nginx: build nginx njs pcre zlib openssl/build quickjs/build libxslt/build libxml2/build
+nginx/nginx: build nginx njs pcre zlib openssl/build libxml2/build libxslt/build quickjs/build
 	cd nginx && ./configure \
         --prefix=/etc/nginx \
         --sbin-path=/usr/sbin/nginx \

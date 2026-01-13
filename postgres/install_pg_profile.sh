@@ -5,7 +5,7 @@
 #
 # Author: Mikhail Grigorev <sleuthhound at gmail dot com>
 # 
-# Current Version: 1.0.5
+# Current Version: 1.0.6
 #
 # License:
 #  This program is distributed in the hope that it will be useful,
@@ -28,6 +28,10 @@ PG_STAT_KCACHE_GIT_VER=REL2_3_1
 PG_WAIT_SAMPLING_VER=v1.1.9
 PG_PROFILE_GIT_VER=4.11
 PG_CONGIG_PATH=""
+PG_HOST="127.0.0.1"
+PG_PORT=5432
+PG_USER="postgres"
+PG_PASSWORD="postgres"
 
 _command_exists() {
 	type "$1" &> /dev/null
@@ -319,38 +323,38 @@ echo
 echo -e "${GREEN}Steps from the official documentation:${NC}"
 echo -e "${GREEN}1) Add module 'pg_stat_kcache' and 'pg_wait_sampling' in shared_preload_libraries in postgresql.conf file after pg_stat_statements and restart you PostgreSQL.${NC}"
 echo -e "${GREEN}2) After restart PostgreSQL execute command for enabling pg_profile module:${NC}"
-echo -e "${CYAN}psql -X -U postgres -d postgres -c 'ALTER SYSTEM SET track_activities = ON;'${NC}"
-echo -e "${CYAN}psql -X -U postgres -d postgres -c 'ALTER SYSTEM SET track_counts = ON;'${NC}"
-echo -e "${CYAN}psql -X -U postgres -d postgres -c 'ALTER SYSTEM SET track_io_timing = ON;'${NC}"
-echo -e "${CYAN}psql -X -U postgres -d postgres -c 'ALTER SYSTEM SET track_wal_io_timing = ON;'${NC}"
-echo -e "${CYAN}psql -X -U postgres -d postgres -c 'ALTER SYSTEM SET track_functions = \"all\";'${NC}"
-echo -e "${CYAN}psql -X -U postgres -d postgres -c 'SELECT pg_reload_conf();'${NC}"
-echo -e "${CYAN}psql -X -U postgres -d postgres -c 'CREATE SCHEMA IF NOT EXISTS dblink;'${NC}"
-echo -e "${CYAN}psql -X -U postgres -d postgres -c 'CREATE EXTENSION IF NOT EXISTS dblink SCHEMA dblink;'${NC}"
-echo -e "${CYAN}psql -X -U postgres -d postgres -c \"CREATE USER profile_usr WITH PASSWORD 'profile_pwd';\"${NC}"
-echo -e "${CYAN}psql -X -U postgres -d postgres -c 'GRANT USAGE ON SCHEMA dblink TO profile_usr;'${NC}"
-echo -e "${CYAN}psql -X -U postgres -d postgres -c 'CREATE SCHEMA IF NOT EXISTS profile AUTHORIZATION profile_usr;'${NC}"
-echo -e "${CYAN}PGPASSWORD=profile_pwd psql -X -h 127.0.0.1 -U profile_usr -d postgres -c 'CREATE EXTENSION IF NOT EXISTS pg_profile SCHEMA profile;'${NC}"
-echo -e "${CYAN}psql -X -U postgres -d postgres -c 'CREATE SCHEMA IF NOT EXISTS pgss;'${NC}"
-echo -e "${CYAN}psql -X -U postgres -d postgres -c 'CREATE SCHEMA IF NOT EXISTS pgsk;'${NC}"
-echo -e "${CYAN}psql -X -U postgres -d postgres -c 'CREATE SCHEMA IF NOT EXISTS pgws;'${NC}"
-echo -e "${CYAN}psql -X -U postgres -d postgres -c 'CREATE EXTENSION IF NOT EXISTS pg_stat_statements SCHEMA pgss;'${NC}"
-echo -e "${CYAN}psql -X -U postgres -d postgres -c 'CREATE EXTENSION IF NOT EXISTS pg_stat_kcache SCHEMA pgsk;'${NC}"
-echo -e "${CYAN}psql -X -U postgres -d postgres -c 'CREATE EXTENSION IF NOT EXISTS pg_wait_sampling SCHEMA pgws;'${NC}"
-echo -e "${CYAN}psql -X -U postgres -d postgres -c \"CREATE USER profile_collector WITH PASSWORD 'collector_pwd';\"${NC}"
-echo -e "${CYAN}psql -X -U postgres -d postgres -c 'GRANT pg_read_all_stats TO profile_collector;'${NC}"
-echo -e "${CYAN}psql -X -U postgres -d postgres -c 'GRANT USAGE ON SCHEMA pgss TO profile_collector;'${NC}"
-echo -e "${CYAN}psql -X -U postgres -d postgres -c 'GRANT USAGE ON SCHEMA pgsk TO profile_collector;'${NC}"
-echo -e "${CYAN}psql -X -U postgres -d postgres -c 'GRANT USAGE ON SCHEMA pgws TO profile_collector;'${NC}"
-echo -e "${CYAN}psql -X -U postgres -d postgres -c 'GRANT EXECUTE ON FUNCTION pgsk.pg_stat_kcache_reset TO profile_collector;'${NC}"
-echo -e "${CYAN}psql -X -U postgres -d postgres -c 'GRANT EXECUTE ON FUNCTION pgss.pg_stat_statements_reset TO profile_collector;'${NC}"
-echo -e "${CYAN}psql -X -U postgres -d postgres -c 'GRANT EXECUTE ON FUNCTION pgws.pg_wait_sampling_reset_profile TO profile_collector;'${NC}"
-echo -e "${CYAN}PGPASSWORD=profile_pwd psql -X -h 127.0.0.1 -U profile_usr -d postgres -c \"SELECT profile.set_server_connstr('local','dbname=postgres port=5432 host=localhost user=profile_collector password=collector_pwd');\"${NC}"
+echo -e "${CYAN}PGPASSWORD=${PG_PASSWORD} psql -X -h ${PG_HOST} -p ${PG_PORT} -U ${PG_USER} -d postgres -c 'ALTER SYSTEM SET track_activities = ON;'${NC}"
+echo -e "${CYAN}PGPASSWORD=${PG_PASSWORD} psql -X -h ${PG_HOST} -p ${PG_PORT} -U ${PG_USER} -d postgres -c 'ALTER SYSTEM SET track_counts = ON;'${NC}"
+echo -e "${CYAN}PGPASSWORD=${PG_PASSWORD} psql -X -h ${PG_HOST} -p ${PG_PORT} -U ${PG_USER} -d postgres -c 'ALTER SYSTEM SET track_io_timing = ON;'${NC}"
+echo -e "${CYAN}PGPASSWORD=${PG_PASSWORD} psql -X -h ${PG_HOST} -p ${PG_PORT} -U ${PG_USER} -d postgres -c 'ALTER SYSTEM SET track_wal_io_timing = ON;'${NC}"
+echo -e "${CYAN}PGPASSWORD=${PG_PASSWORD} psql -X -h ${PG_HOST} -p ${PG_PORT} -U ${PG_USER} -d postgres -c 'ALTER SYSTEM SET track_functions = \"all\";'${NC}"
+echo -e "${CYAN}PGPASSWORD=${PG_PASSWORD} psql -X -h ${PG_HOST} -p ${PG_PORT} -U ${PG_USER} -d postgres -c 'SELECT pg_reload_conf();'${NC}"
+echo -e "${CYAN}PGPASSWORD=${PG_PASSWORD} psql -X -h ${PG_HOST} -p ${PG_PORT} -U ${PG_USER} -d postgres -c 'CREATE SCHEMA IF NOT EXISTS dblink;'${NC}"
+echo -e "${CYAN}PGPASSWORD=${PG_PASSWORD} psql -X -h ${PG_HOST} -p ${PG_PORT} -U ${PG_USER} -d postgres -c 'CREATE EXTENSION IF NOT EXISTS dblink SCHEMA dblink;'${NC}"
+echo -e "${CYAN}PGPASSWORD=${PG_PASSWORD} psql -X -h ${PG_HOST} -p ${PG_PORT} -U ${PG_USER} -d postgres -c \"CREATE USER profile_usr WITH PASSWORD 'profile_pwd';\"${NC}"
+echo -e "${CYAN}PGPASSWORD=${PG_PASSWORD} psql -X -h ${PG_HOST} -p ${PG_PORT} -U ${PG_USER} -d postgres -c 'GRANT USAGE ON SCHEMA dblink TO profile_usr;'${NC}"
+echo -e "${CYAN}PGPASSWORD=${PG_PASSWORD} psql -X -h ${PG_HOST} -p ${PG_PORT} -U ${PG_USER} -d postgres -c 'CREATE SCHEMA IF NOT EXISTS profile AUTHORIZATION profile_usr;'${NC}"
+echo -e "${CYAN}PGPASSWORD=profile_pwd psql -X -h ${PG_HOST} -p ${PG_PORT} -U profile_usr -d postgres -c 'CREATE EXTENSION IF NOT EXISTS pg_profile SCHEMA profile;'${NC}"
+echo -e "${CYAN}PGPASSWORD=${PG_PASSWORD} psql -X -h ${PG_HOST} -p ${PG_PORT} -U ${PG_USER} -d postgres -c 'CREATE SCHEMA IF NOT EXISTS pgss;'${NC}"
+echo -e "${CYAN}PGPASSWORD=${PG_PASSWORD} psql -X -h ${PG_HOST} -p ${PG_PORT} -U ${PG_USER} -d postgres -c 'CREATE SCHEMA IF NOT EXISTS pgsk;'${NC}"
+echo -e "${CYAN}PGPASSWORD=${PG_PASSWORD} psql -X -h ${PG_HOST} -p ${PG_PORT} -U ${PG_USER} -d postgres -c 'CREATE SCHEMA IF NOT EXISTS pgws;'${NC}"
+echo -e "${CYAN}PGPASSWORD=${PG_PASSWORD} psql -X -h ${PG_HOST} -p ${PG_PORT} -U ${PG_USER} -d postgres -c 'CREATE EXTENSION IF NOT EXISTS pg_stat_statements SCHEMA pgss;'${NC}"
+echo -e "${CYAN}PGPASSWORD=${PG_PASSWORD} psql -X -h ${PG_HOST} -p ${PG_PORT} -U ${PG_USER} -d postgres -c 'CREATE EXTENSION IF NOT EXISTS pg_stat_kcache SCHEMA pgsk;'${NC}"
+echo -e "${CYAN}PGPASSWORD=${PG_PASSWORD} psql -X -h ${PG_HOST} -p ${PG_PORT} -U ${PG_USER} -d postgres -c 'CREATE EXTENSION IF NOT EXISTS pg_wait_sampling SCHEMA pgws;'${NC}"
+echo -e "${CYAN}PGPASSWORD=${PG_PASSWORD} psql -X -h ${PG_HOST} -p ${PG_PORT} -U ${PG_USER} -d postgres -c \"CREATE USER profile_collector WITH PASSWORD 'collector_pwd';\"${NC}"
+echo -e "${CYAN}PGPASSWORD=${PG_PASSWORD} psql -X -h ${PG_HOST} -p ${PG_PORT} -U ${PG_USER} -d postgres -c 'GRANT pg_read_all_stats TO profile_collector;'${NC}"
+echo -e "${CYAN}PGPASSWORD=${PG_PASSWORD} psql -X -h ${PG_HOST} -p ${PG_PORT} -U ${PG_USER} -d postgres -c 'GRANT USAGE ON SCHEMA pgss TO profile_collector;'${NC}"
+echo -e "${CYAN}PGPASSWORD=${PG_PASSWORD} psql -X -h ${PG_HOST} -p ${PG_PORT} -U ${PG_USER} -d postgres -c 'GRANT USAGE ON SCHEMA pgsk TO profile_collector;'${NC}"
+echo -e "${CYAN}PGPASSWORD=${PG_PASSWORD} psql -X -h ${PG_HOST} -p ${PG_PORT} -U ${PG_USER} -d postgres -c 'GRANT USAGE ON SCHEMA pgws TO profile_collector;'${NC}"
+echo -e "${CYAN}PGPASSWORD=${PG_PASSWORD} psql -X -h ${PG_HOST} -p ${PG_PORT} -U ${PG_USER} -d postgres -c 'GRANT EXECUTE ON FUNCTION pgsk.pg_stat_kcache_reset TO profile_collector;'${NC}"
+echo -e "${CYAN}PGPASSWORD=${PG_PASSWORD} psql -X -h ${PG_HOST} -p ${PG_PORT} -U ${PG_USER} -d postgres -c 'GRANT EXECUTE ON FUNCTION pgss.pg_stat_statements_reset TO profile_collector;'${NC}"
+echo -e "${CYAN}PGPASSWORD=${PG_PASSWORD} psql -X -h ${PG_HOST} -p ${PG_PORT} -U ${PG_USER} -d postgres -c 'GRANT EXECUTE ON FUNCTION pgws.pg_wait_sampling_reset_profile TO profile_collector;'${NC}"
+echo -e "${CYAN}PGPASSWORD=profile_pwd psql -X -h ${PG_HOST} -p ${PG_PORT} -U profile_usr -d postgres -c \"SELECT profile.set_server_connstr('local','dbname=postgres port=${PG_PORT} host=localhost user=profile_collector password=collector_pwd');\"${NC}"
 echo -e "${GREEN}3) After enabling pg_profile module add in your crontab:${NC}"
-echo -e "${CYAN}*/30 * * * * PGPASSWORD=profile_pwd ${PG_BIN_PATH}/psql -qAtX -h 127.0.0.1 -U profile_usr -d postgres -c 'SELECT profile.take_sample()' > /dev/null 2>&1${NC}"
+echo -e "${CYAN}*/30 * * * * PGPASSWORD=profile_pwd ${PG_BIN_PATH}/psql -qAtX -h ${PG_HOST} -p ${PG_PORT} -U profile_usr -d postgres -c 'SELECT profile.take_sample()' > /dev/null 2>&1${NC}"
 echo -e "${GREEN}4) For view sample execute:${NC}"
-echo -e "${CYAN}PGPASSWORD=profile_pwd ${PG_BIN_PATH}/psql -qX -h 127.0.0.1 -U profile_usr -d postgres -c 'SELECT profile.show_samples()'${NC}"
+echo -e "${CYAN}PGPASSWORD=profile_pwd ${PG_BIN_PATH}/psql -qX -h ${PG_HOST} -p ${PG_PORT} -U profile_usr -d postgres -c 'SELECT profile.show_samples()'${NC}"
 echo -e "${GREEN}5) For create report execute:${NC}"
-echo -e "${CYAN}PGPASSWORD=profile_pwd ${PG_BIN_PATH}/psql -qAtX -h 127.0.0.1 -U profile_usr -d postgres -c  'SELECT profile.get_report(1, 11)' > report_1_11.html${NC}"
+echo -e "${CYAN}PGPASSWORD=profile_pwd ${PG_BIN_PATH}/psql -qAtX -h ${PG_HOST} -p ${PG_PORT} -U profile_usr -d postgres -c  'SELECT profile.get_report(1, 11)' > report_1_11.html${NC}"
 echo -e "${GREEN}Goodbye ;)${NC}"
 

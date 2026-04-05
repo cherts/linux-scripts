@@ -70,11 +70,18 @@ else
 	exit 1
 fi
 
-# Detect jq
-if _command_exists jq; then
-	JQ_BIN=$(which jq)
+# Detect curl
+if _command_exists curl; then
+	CURL_BIN=$(which curl)
 else
-	echo "ERROR: jq binary not found."
+	echo "ERROR: curl binary not found."
+	exit 1
+fi
+
+if _command_exists wget; then
+	WGET_BIN=$(which wget)
+else
+	echo "ERROR: wget binary not found."
 	exit 1
 fi
 
@@ -166,12 +173,12 @@ else
 	exit 1
 fi
 
-LATEST_VER=$(curl -Ls "https://api.github.com/repos/9seconds/${PROGRAM_NAME}/releases/latest" 2>/dev/null | ${JQ_BIN} -r .tag_name | sed 's/[^0-9.]//g')
+LATEST_VER=$(${CURL_BIN} -Ls "https://api.github.com/repos/9seconds/${PROGRAM_NAME}/releases/latest" 2>/dev/null | ${JQ_BIN} -r .tag_name | sed 's/[^0-9.]//g')
 if [ -n "${LATEST_VER}" ]; then
 	echo "Latest MTG version: ${LATEST_VER}"
 	OS_NAME=$(uname -s | tr '[:upper:]' '[:lower:]')
 	echo "Downloading latest version..."
-	wget https://github.com/9seconds/mtg/releases/download/v${LATEST_VER}/${PROGRAM_NAME}-${LATEST_VER}-${OS_NAME}-${ARCH}.tar.gz -O ${SCRIPT_DIR}/${PROGRAM_NAME}.tar.gz >/dev/null 2>&1
+	${WGET_BIN} https://github.com/9seconds/${PROGRAM_NAME}/releases/download/v${LATEST_VER}/${PROGRAM_NAME}-${LATEST_VER}-${OS_NAME}-${ARCH}.tar.gz -O "${SCRIPT_DIR}/${PROGRAM_NAME}.tar.gz" >/dev/null 2>&1
 	if [ -f "${SCRIPT_DIR}/${PROGRAM_NAME}.tar.gz" ]; then
 		echo "Done"
 		echo "Extract ${PROGRAM_NAME}.tar.gz..."

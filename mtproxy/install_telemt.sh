@@ -62,7 +62,7 @@ fi
 
 if _command_exists pgrep; then
 	PGREP_BIN=$(which pgrep)
-	PROCESS_RUN=$(${PGREP_BIN} -x "telemt" 2>/dev/null | wc -l)
+	PROCESS_RUN=$(${PGREP_BIN} -x "${PROGRAM_NAME}" 2>/dev/null | wc -l)
 else
 	PROCESS_RUN=$(ps -ef 2>/dev/null | grep [t]elemt -c)
 fi

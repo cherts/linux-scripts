@@ -101,17 +101,20 @@ elif type lsb_release >/dev/null 2>&1; then
 	VER=$(lsb_release -sr)
 	echo "Distro: ${OS}"
 	echo "Version: ${VER}"
-elif [ -f /etc/lsb-release ]; then
-	. /etc/lsb-release
+elif [ -f "/etc/lsb-release" ]; then
+	. "/etc/lsb-release"
 	OS=$DISTRIB_ID
 	VER=$DISTRIB_RELEASE
 	echo "Distro: ${OS}"
 	echo "Version: ${VER}"
-elif [ -f /etc/debian_version ]; then
+elif [ -f "/etc/debian_version" ]; then
 	OS=Debian
-	VER=$(cat /etc/debian_version)
+	VER=$(cat "/etc/debian_version")
 	echo "Distro: ${OS}"
 	echo "Version: ${VER}"
+else
+	echo "Distro: Unknown"
+	echo "Version: Unknown"
 fi
 
 echo -n "Checking your privileges... "

@@ -52,6 +52,14 @@ else
 	exit 1
 fi
 
+# Detect openssl
+if _command_exists openssl; then
+	OPENSSL_BIN=$(which openssl)
+else
+	echo "ERROR: openssl binary not found."
+	exit 1
+fi
+
 if _command_exists pgrep; then
 	PGREP_BIN=$(which pgrep)
 	PROCESS_RUN=$(${PGREP_BIN} -x "telemt" 2>/dev/null | wc -l)
@@ -141,7 +149,7 @@ if [ -f "${SCRIPT_DIR}/${PROGRAM_NAME}.tar.gz" ]; then
 		if [ -z "${FAKE_TLS_DOMAIN}" ]; then
 			FAKE_TLS_DOMAIN="${DEFAULT_DOMAIN}"
 		fi
-		SECRET_HEX=$(openssl rand -hex 16)
+		SECRET_HEX=$(${OPENSSL_BIN} rand -hex 16)
 		echo -n "Enter Bind port [${DEFAULT_PORT}]: "
 		read BIND_PORT
 		if [ -z "${BIND_PORT}" ]; then

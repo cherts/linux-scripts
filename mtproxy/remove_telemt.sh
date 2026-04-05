@@ -30,9 +30,18 @@ _command_exists() {
 	type "$1" &>/dev/null
 }
 
+# Detect netstat
+if _command_exists netstat; then
+	NETSTAT_BIN=$(which netstat)
+else
+	echo "ERROR: netstat binary not found."
+	exit 1
+fi
+
+# Detect pgrep
 if _command_exists pgrep; then
 	PGREP_BIN=$(which pgrep)
-	PROCESS_RUN=$(${PGREP_BIN} -x "telemt" 2>/dev/null | wc -l)
+	PROCESS_RUN=$(${PGREP_BIN} -x "${PROGRAM_NAME}" 2>/dev/null | wc -l)
 else
 	PROCESS_RUN=$(ps -ef 2>/dev/null | grep [t]elemt -c)
 fi
@@ -45,7 +54,7 @@ fi
 if [ ${PROCESS_RUN} -ne 0 ]; then
 	echo "WARNING: TeleMT is already running."
 	echo "Show netstat..."
-	netstat -ltupn | grep LISTEN | grep ${PROGRAM_NAME}
+	${NETSTAT_BIN} -ltupn | grep LISTEN | grep ${PROGRAM_NAME}
 	echo "Stopping ${PROGRAM_NAME}..."
 	systemctl stop ${PROGRAM_NAME} >/dev/null 2>&1
 	systemctl disable ${PROGRAM_NAME} >/dev/null 2>&1
@@ -69,4 +78,4 @@ groupdel ${PROGRAM_NAME} >/dev/null 2>&1
 echo "Reload systemd..."
 systemctl daemon-reload >/dev/null 2>&1
 echo "Show netstat..."
-netstat -ltupn | grep LISTEN | grep ${PROGRAM_NAME}
+${NETSTAT_BIN} -ltupn | grep LISTEN | grep ${PROGRAM_NAME}

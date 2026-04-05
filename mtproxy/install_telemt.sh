@@ -44,6 +44,14 @@ _command_exists() {
 	type "$1" &>/dev/null
 }
 
+# Detect netstat
+if _command_exists netstat; then
+	NETSTAT_BIN=$(which netstat)
+else
+	echo "ERROR: netstat binary not found."
+	exit 1
+fi
+
 # Detect jq
 if _command_exists jq; then
 	JQ_BIN=$(which jq)
@@ -67,6 +75,27 @@ else
 	PROCESS_RUN=$(ps -ef 2>/dev/null | grep [t]elemt -c)
 fi
 
+# Confirm dialog
+_confirm() {
+	local RET=true
+	while $RET; do
+		read -r -p "${1:-Are you sure? [y/N]} " RESPONSE
+		case "${RESPONSE}" in
+		[yY][eE][sS] | [yY])
+			RET=true
+			break
+			;;
+		[nN][oO] | [nN])
+			RET=false
+			;;
+		*)
+			echo "Invalid response"
+			;;
+		esac
+	done
+	$RET
+}
+
 if [ ${PROCESS_RUN} -ne 0 ]; then
 	echo "WARNING: TeleMT is already running."
 	if [ ! -f "${CONF_DIR}/.installed" ]; then
@@ -81,11 +110,10 @@ fi
 
 if [ -f "${CONF_DIR}/.installed" ]; then
 	echo "WARNING: TeleMT is already installed."
-	echo "WARNING: If you want to reinstall TeleMT, to remove file '${CONF_DIR}/.installed' and run script again."
 	echo "CONF_DIR: ${CONF_DIR}"
 	echo "DATA_DIR: ${DATA_DIR}"
 	echo "DEFAULT_DIR: ${DEFAULT_DIR}"
-	exit 1
+	_confirm "Would you really reinstall TeleMT (old config file will be renamed)? [y/N]" || exit 0
 fi
 
 OS_NAME=$(uname -s)
@@ -238,7 +266,7 @@ EOF
 	echo "Show logs:"
 	journalctl -u ${PROGRAM_NAME} -n 35 --no-pager
 	echo "Show netstat..."
-	netstat -ltupn | grep LISTEN | grep ${PROGRAM_NAME}
+	${NETSTAT_BIN} -ltupn | grep LISTEN | grep ${PROGRAM_NAME}
 	echo "Show links:"
 	curl -s http://127.0.0.1:9091/v1/users | ${JQ_BIN}
 else

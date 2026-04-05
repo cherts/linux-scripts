@@ -272,7 +272,7 @@ EOF
 	sleep 10
 	echo "Show logs:"
 	journalctl -u ${PROGRAM_NAME} -n 35 --no-pager
-	echo "Show netstat..."
+	echo "Show netstat:"
 	${NETSTAT_BIN} -ltupn | grep LISTEN | grep ${PROGRAM_NAME}
 	echo "Show links:"
 	curl -s http://127.0.0.1:9091/v1/users | ${JQ_BIN}

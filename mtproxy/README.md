@@ -1,4 +1,4 @@
-# A set of scripts for automated installation of various MTProto Proxies
+# A set of scripts for automated installation of various MTProto Proxy
 
 [По-русски / In Russian](README.ru.md)
 

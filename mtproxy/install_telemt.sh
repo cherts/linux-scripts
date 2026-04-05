@@ -68,6 +68,13 @@ else
 	exit 1
 fi
 
+if _command_exists wget; then
+	WGET_BIN=$(which wget)
+else
+	echo "ERROR: wget binary not found."
+	exit 1
+fi
+
 if _command_exists pgrep; then
 	PGREP_BIN=$(which pgrep)
 	PROCESS_RUN=$(${PGREP_BIN} -x "${PROGRAM_NAME}" 2>/dev/null | wc -l)
@@ -155,7 +162,7 @@ else
 fi
 
 echo "Downloading latest version..."
-wget "https://github.com/telemt/telemt/releases/latest/download/telemt-$(uname -m)-linux-$(ldd --version 2>&1 | grep -iq musl && echo musl || echo gnu).tar.gz" -O "${SCRIPT_DIR}/${PROGRAM_NAME}.tar.gz" >/dev/null 2>&1
+${WGET_BIN} "https://github.com/telemt/telemt/releases/latest/download/telemt-$(uname -m)-linux-$(ldd --version 2>&1 | grep -iq musl && echo musl || echo gnu).tar.gz" -O "${SCRIPT_DIR}/${PROGRAM_NAME}.tar.gz" >/dev/null 2>&1
 if [ -f "${SCRIPT_DIR}/${PROGRAM_NAME}.tar.gz" ]; then
 	echo "Done"
 	echo "Extract ${PROGRAM_NAME}.tar.gz..."

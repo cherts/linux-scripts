@@ -288,7 +288,7 @@ EOF
 		if [ -f "${CONF_DIR}/${PROGRAM_NAME}.toml" ]; then
 			echo "Show doctor:"
 			${PROGRAM_NAME} doctor "${CONF_DIR}/${PROGRAM_NAME}.toml"
-			echo "Show access:"
+			echo "Show access (connection links):"
 			${PROGRAM_NAME} access "${CONF_DIR}/${PROGRAM_NAME}.toml"
 		fi
 	else

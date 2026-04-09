@@ -6,7 +6,7 @@
 #
 # Author: Mikhail Grigorev <sleuthhound at gmail dot com>
 #
-# Current Version: 1.0
+# Current Version: 1.1
 #
 # Revision History:
 #
@@ -38,6 +38,14 @@ else
 	exit 1
 fi
 
+# Detect systemctl
+if _command_exists systemctl; then
+	SYSTEMCTL_BIN=$(which systemctl)
+else
+	echo "ERROR: systemctl binary not found."
+	exit 1
+fi
+
 # Detect pgrep
 if _command_exists pgrep; then
 	PGREP_BIN=$(which pgrep)
@@ -56,11 +64,11 @@ if [ ${PROCESS_RUN} -ne 0 ]; then
 	echo "Show netstat..."
 	${NETSTAT_BIN} -ltupn | grep LISTEN | grep ${PROGRAM_NAME}
 	echo "Stopping ${PROGRAM_NAME}..."
-	systemctl stop ${PROGRAM_NAME} >/dev/null 2>&1
-	systemctl disable ${PROGRAM_NAME} >/dev/null 2>&1
+	${SYSTEMCTL_BIN} stop ${PROGRAM_NAME} >/dev/null 2>&1
+	${SYSTEMCTL_BIN} disable ${PROGRAM_NAME} >/dev/null 2>&1
 else
 	echo "WARNING: TeleMT is not running."
-	systemctl disable ${PROGRAM_NAME} >/dev/null 2>&1
+	${SYSTEMCTL_BIN} disable ${PROGRAM_NAME} >/dev/null 2>&1
 fi
 
 echo "Remove config and data directory..."
@@ -76,6 +84,6 @@ echo "Remove system user and group..."
 userdel ${PROGRAM_NAME} >/dev/null 2>&1
 groupdel ${PROGRAM_NAME} >/dev/null 2>&1
 echo "Reload systemd..."
-systemctl daemon-reload >/dev/null 2>&1
+${SYSTEMCTL_BIN} daemon-reload >/dev/null 2>&1
 echo "Show netstat..."
 ${NETSTAT_BIN} -ltupn | grep LISTEN | grep ${PROGRAM_NAME}

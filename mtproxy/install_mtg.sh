@@ -6,7 +6,7 @@
 #
 # Author: Mikhail Grigorev <sleuthhound at gmail dot com>
 #
-# Current Version: 1.0
+# Current Version: 1.1
 #
 # Revision History:
 #
@@ -78,10 +78,27 @@ else
 	exit 1
 fi
 
+# Detect wget
 if _command_exists wget; then
 	WGET_BIN=$(which wget)
 else
 	echo "ERROR: wget binary not found."
+	exit 1
+fi
+
+# Detect tar
+if _command_exists tar; then
+	TAR_BIN=$(which tar)
+else
+	echo "ERROR: tar binary not found."
+	exit 1
+fi
+
+# Detect systemctl
+if _command_exists systemctl; then
+	SYSTEMCTL_BIN=$(which systemctl)
+else
+	echo "ERROR: systemctl binary not found."
 	exit 1
 fi
 
@@ -182,12 +199,15 @@ if [ -n "${LATEST_VER}" ]; then
 	if [ -f "${SCRIPT_DIR}/${PROGRAM_NAME}.tar.gz" ]; then
 		echo "Done"
 		echo "Extract ${PROGRAM_NAME}.tar.gz..."
-		tar -zxf "${SCRIPT_DIR}/${PROGRAM_NAME}.tar.gz" >/dev/null 2>&1
+		${TAR_BIN} -zxf "${SCRIPT_DIR}/${PROGRAM_NAME}.tar.gz" >/dev/null 2>&1
 		if [ -f "${SCRIPT_DIR}/${PROGRAM_NAME}-${LATEST_VER}-${OS_NAME}-${ARCH}/${PROGRAM_NAME}" ]; then
 			echo "Stoping old MTG..."
-			systemctl stop ${PROGRAM_NAME} >/dev/null 2>&1
+			${SYSTEMCTL_BIN} stop ${PROGRAM_NAME} >/dev/null 2>&1
 			echo "Install new binary..."
 			yes | cp "${SCRIPT_DIR}/${PROGRAM_NAME}-${LATEST_VER}-${OS_NAME}-${ARCH}/${PROGRAM_NAME}" /usr/sbin/${PROGRAM_NAME}
+		else
+			echo "ERROR: MTG binary not found. Exit..."
+			exit 1
 		fi
 		echo "Creating config directory '${CONF_DIR}'..."
 		mkdir "${CONF_DIR}" >/dev/null 2>&1
@@ -223,7 +243,6 @@ WorkingDirectory=${DATA_DIR}
 ExecStart=/usr/sbin/${PROGRAM_NAME} run \$OPTIONS
 Restart=on-failure
 RestartSec=3
-DynamicUser=true
 LimitNOFILE=65536
 AmbientCapabilities=CAP_NET_BIND_SERVICE
  
@@ -257,8 +276,8 @@ EOF
 		rm -f "${SCRIPT_DIR}/${PROGRAM_NAME}.tar.gz" >/dev/null 2>&1
 		rm -rf "${SCRIPT_DIR}/${PROGRAM_NAME}-${LATEST_VER}-${OS_NAME}-${ARCH}" >/dev/null 2>&1
 		echo "Starting MTG..."
-		systemctl daemon-reload >/dev/null 2>&1
-		systemctl enable ${PROGRAM_NAME} --now >/dev/null 2>&1
+		${SYSTEMCTL_BIN} daemon-reload >/dev/null 2>&1
+		${SYSTEMCTL_BIN} enable ${PROGRAM_NAME} --now >/dev/null 2>&1
 		touch "${CONF_DIR}/.installed" >/dev/null 2>&1
 		echo "Waiting 10 second..."
 		sleep 10

@@ -6,7 +6,7 @@
 #
 # Author: Mikhail Grigorev <sleuthhound at gmail dot com>
 #
-# Current Version: 1.0
+# Current Version: 1.1
 #
 # Revision History:
 #
@@ -74,10 +74,27 @@ else
 	exit 1
 fi
 
+# Detect wget
 if _command_exists wget; then
 	WGET_BIN=$(which wget)
 else
 	echo "ERROR: wget binary not found."
+	exit 1
+fi
+
+# Detect tar
+if _command_exists tar; then
+	TAR_BIN=$(which tar)
+else
+	echo "ERROR: tar binary not found."
+	exit 1
+fi
+
+# Detect systemctl
+if _command_exists systemctl; then
+	SYSTEMCTL_BIN=$(which systemctl)
+else
+	echo "ERROR: systemctl binary not found."
 	exit 1
 fi
 
@@ -146,14 +163,14 @@ if [ -n "${LATEST_VER}" ]; then
 	if [ -f "${SCRIPT_DIR}/${PROGRAM_NAME}.tar.gz" ]; then
 		echo "Done"
 		echo "Extract mtg.tar.gz..."
-		tar -zxf "${SCRIPT_DIR}/${PROGRAM_NAME}.tar.gz" >/dev/null 2>&1
+		${TAR_BIN} -zxf "${SCRIPT_DIR}/${PROGRAM_NAME}.tar.gz" >/dev/null 2>&1
 		if [ -f "${SCRIPT_DIR}/${PROGRAM_NAME}-${LATEST_VER}-${OS_NAME}-${ARCH}/${PROGRAM_NAME}" ]; then
 			echo "Stoping old MTG..."
-			systemctl stop ${PROGRAM_NAME} >/dev/null 2>&1
+			${SYSTEMCTL_BIN} stop ${PROGRAM_NAME} >/dev/null 2>&1
 			echo "Install new binary..."
 			yes | cp ${PROGRAM_NAME}-${LATEST_VER}-${OS_NAME}-${ARCH}/${PROGRAM_NAME} /usr/sbin/${PROGRAM_NAME}
 			echo "Starting new MTG..."
-			systemctl start ${PROGRAM_NAME} >/dev/null 2>&1
+			${SYSTEMCTL_BIN} start ${PROGRAM_NAME} >/dev/null 2>&1
 		fi
 		echo "Remove ${PROGRAM_NAME}.tar.gz..."
 		rm -f "${SCRIPT_DIR}/${PROGRAM_NAME}.tar.gz" >/dev/null 2>&1

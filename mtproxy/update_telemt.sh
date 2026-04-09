@@ -6,7 +6,7 @@
 #
 # Author: Mikhail Grigorev <sleuthhound at gmail dot com>
 #
-# Current Version: 1.0
+# Current Version: 1.1
 #
 # Revision History:
 #
@@ -48,10 +48,35 @@ else
 	exit 1
 fi
 
+# Detect curl
+if _command_exists curl; then
+	CURL_BIN=$(which curl)
+else
+	echo "ERROR: curl binary not found."
+	exit 1
+fi
+
+# Detect wget
 if _command_exists wget; then
 	WGET_BIN=$(which wget)
 else
 	echo "ERROR: wget binary not found."
+	exit 1
+fi
+
+# Detect tar
+if _command_exists tar; then
+	TAR_BIN=$(which tar)
+else
+	echo "ERROR: tar binary not found."
+	exit 1
+fi
+
+# Detect systemctl
+if _command_exists systemctl; then
+	SYSTEMCTL_BIN=$(which systemctl)
+else
+	echo "ERROR: systemctl binary not found."
 	exit 1
 fi
 
@@ -115,14 +140,14 @@ ${WGET_BIN} "https://github.com/telemt/telemt/releases/latest/download/telemt-$(
 if [ -f "${SCRIPT_DIR}/${PROGRAM_NAME}.tar.gz" ]; then
 	echo "Done"
 	echo "Extract ${PROGRAM_NAME}.tar.gz..."
-	tar -zxf "${SCRIPT_DIR}/${PROGRAM_NAME}.tar.gz" >/dev/null 2>&1
+	${TAR_BIN} -zxf "${SCRIPT_DIR}/${PROGRAM_NAME}.tar.gz" >/dev/null 2>&1
 	if [ -f "${SCRIPT_DIR}/${PROGRAM_NAME}" ]; then
 		echo "Stoping old Telemt..."
-		systemctl stop ${PROGRAM_NAME} >/dev/null 2>&1
+		${SYSTEMCTL_BIN} stop ${PROGRAM_NAME} >/dev/null 2>&1
 		echo "Install new binary..."
 		yes | cp "${SCRIPT_DIR}/${PROGRAM_NAME}" "/usr/sbin/${PROGRAM_NAME}"
 		echo "Starting new Telemt..."
-		systemctl start ${PROGRAM_NAME} >/dev/null 2>&1
+		${SYSTEMCTL_BIN} start ${PROGRAM_NAME} >/dev/null 2>&1
 	fi
 	echo "Remove ${PROGRAM_NAME}.tar.gz..."
 	rm -f "${SCRIPT_DIR}/${PROGRAM_NAME}.tar.gz" >/dev/null 2>&1
@@ -132,7 +157,7 @@ if [ -f "${SCRIPT_DIR}/${PROGRAM_NAME}.tar.gz" ]; then
 	echo "Show netstat:"
 	${NETSTAT_BIN} -ltupn | grep LISTEN | grep ${PROGRAM_NAME}
 	echo "Show links:"
-	curl -s http://127.0.0.1:9091/v1/users | ${JQ_BIN}
+	${CURL_BIN} -s http://127.0.0.1:9091/v1/users | ${JQ_BIN}
 else
 	echo "ERROR: Download not completed. Exit..."
 	exit 1

@@ -186,14 +186,17 @@ if [ $? -eq 0 ]; then
 		fi
 		echo "Created standart Telemt config..."
 		cat <<EOF >"${CONF_DIR}/${PROGRAM_NAME}.toml"
-# === General Settings ===
 [general]
 use_middle_proxy = false
+log_level = "normal"
 
 [general.modes]
 classic = false
 secure = false
 tls = true
+
+[general.links]
+show = "*"
 
 [server]
 port = ${BIND_PORT}
@@ -204,12 +207,13 @@ listen = "127.0.0.1:9091"
 whitelist = ["127.0.0.1/32"]
 read_only = true
 
-# === Anti-Censorship & Masking ===
+[[server.listeners]]
+ip = "0.0.0.0"
+
 [censorship]
 tls_domain = "${FAKE_TLS_DOMAIN}"
 
 [access.users]
-# format: "username" = "32_hex_chars_secret"
 hello = "${SECRET_HEX}"
 EOF
 	fi

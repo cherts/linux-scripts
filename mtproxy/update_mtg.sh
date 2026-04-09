@@ -41,7 +41,13 @@ _command_exists() {
 }
 
 case "$(uname -m)" in
-x86_64 | x64 | amd64) ARCH="amd64" ;;
+x86_64 | x64 | amd64) 
+if [ -r /proc/cpuinfo ] && grep -q "avx2" /proc/cpuinfo 2>/dev/null && grep -q "bmi2" /proc/cpuinfo 2>/dev/null; then
+ARCH="amd64-v3"
+else
+ARCH="amd64"
+fi
+;;
 i*86 | x86) ARCH="386" ;;
 armv8* | armv8 | arm64 | aarch64) ARCH="arm64" ;;
 armv7* | armv7 | arm) ARCH="armv7" ;;
@@ -50,53 +56,19 @@ mips*) ARCH="mips" ;;
 *) echo "ERROR: Unsupported CPU architecture!" && exit 1 ;;
 esac
 
-# Detect jq
-if _command_exists jq; then
-	JQ_BIN=$(which jq)
-else
-	echo "ERROR: jq binary not found."
-	exit 1
-fi
-
-# Detect netstat
-if _command_exists netstat; then
-	NETSTAT_BIN=$(which netstat)
-else
-	echo "ERROR: netstat binary not found."
-	exit 1
-fi
-
-# Detect curl
-if _command_exists curl; then
-	CURL_BIN=$(which curl)
-else
-	echo "ERROR: curl binary not found."
-	exit 1
-fi
-
-# Detect wget
-if _command_exists wget; then
-	WGET_BIN=$(which wget)
-else
-	echo "ERROR: wget binary not found."
-	exit 1
-fi
-
-# Detect tar
-if _command_exists tar; then
-	TAR_BIN=$(which tar)
-else
-	echo "ERROR: tar binary not found."
-	exit 1
-fi
-
-# Detect systemctl
-if _command_exists systemctl; then
-	SYSTEMCTL_BIN=$(which systemctl)
-else
-	echo "ERROR: systemctl binary not found."
-	exit 1
-fi
+# Checking the availability of necessary utilities
+COMMAND_EXIST_ARRAY=(JQ NETSTAT CURL WGET TAR SYSTEMCTL)
+for ((i=0; i<${#COMMAND_EXIST_ARRAY[@]}; i++)); do
+	__CMDVAR=${COMMAND_EXIST_ARRAY[$i]}
+	CMD_FIND=$(echo "${__CMDVAR}" | tr '[:upper:]' '[:lower:]')
+	if _command_exists ${CMD_FIND} ; then
+		eval $__CMDVAR'_BIN'="'$(which ${CMD_FIND})'"
+		hash "${CMD_FIND}" >/dev/null 2>&1
+	else
+		echo -e "ERROR: Command '${CMD_FIND}' not found."
+		exit 1
+	fi
+done
 
 # Detect pgrep
 if _command_exists pgrep; then
@@ -156,14 +128,19 @@ fi
 
 LATEST_VER=$(${CURL_BIN} -Ls "https://api.github.com/repos/9seconds/${PROGRAM_NAME}/releases/latest" 2>/dev/null | ${JQ_BIN} -r .tag_name | sed 's/[^0-9.]//g')
 if [ -n "${LATEST_VER}" ]; then
-	OS_NAME=$(uname -s | tr '[:upper:]' '[:lower:]')
 	echo "Latest MTG version: ${LATEST_VER}"
-	echo "Downloading latest version..."
-	${WGET_BIN} https://github.com/9seconds/${PROGRAM_NAME}/releases/download/v${LATEST_VER}/${PROGRAM_NAME}-${LATEST_VER}-${OS_NAME}-${ARCH}.tar.gz -O "${SCRIPT_DIR}/${PROGRAM_NAME}.tar.gz" >/dev/null 2>&1
-	if [ -f "${SCRIPT_DIR}/${PROGRAM_NAME}.tar.gz" ]; then
-		echo "Done"
-		echo "Extract mtg.tar.gz..."
-		${TAR_BIN} -zxf "${SCRIPT_DIR}/${PROGRAM_NAME}.tar.gz" >/dev/null 2>&1
+	OS_NAME=$(uname -s | tr '[:upper:]' '[:lower:]')
+	echo "Downloading latest version '${PROGRAM_NAME}-${LATEST_VER}-${OS_NAME}-${ARCH}.tar.gz'..."
+	${WGET_BIN} "https://github.com/9seconds/${PROGRAM_NAME}/releases/download/v${LATEST_VER}/${PROGRAM_NAME}-${LATEST_VER}-${OS_NAME}-${ARCH}.tar.gz" -O "${SCRIPT_DIR}/${PROGRAM_NAME}.tar.gz" >/dev/null 2>&1
+	if [ $? -eq 0 ]; then
+		echo "Download complete."
+		if [ -f "${SCRIPT_DIR}/${PROGRAM_NAME}.tar.gz" ]; then
+			echo "Extract ${PROGRAM_NAME}.tar.gz..."
+			${TAR_BIN} -zxf "${SCRIPT_DIR}/${PROGRAM_NAME}.tar.gz" >/dev/null 2>&1
+		else
+			echo "ERROR: MTG archive not found. Exit..."
+			exit 1
+		fi
 		if [ -f "${SCRIPT_DIR}/${PROGRAM_NAME}-${LATEST_VER}-${OS_NAME}-${ARCH}/${PROGRAM_NAME}" ]; then
 			echo "Stoping old MTG..."
 			${SYSTEMCTL_BIN} stop ${PROGRAM_NAME} >/dev/null 2>&1
@@ -171,6 +148,9 @@ if [ -n "${LATEST_VER}" ]; then
 			yes | cp ${PROGRAM_NAME}-${LATEST_VER}-${OS_NAME}-${ARCH}/${PROGRAM_NAME} /usr/sbin/${PROGRAM_NAME}
 			echo "Starting new MTG..."
 			${SYSTEMCTL_BIN} start ${PROGRAM_NAME} >/dev/null 2>&1
+		else
+			echo "ERROR: MTG binary not found. Exit..."
+			exit 1
 		fi
 		echo "Remove ${PROGRAM_NAME}.tar.gz..."
 		rm -f "${SCRIPT_DIR}/${PROGRAM_NAME}.tar.gz" >/dev/null 2>&1

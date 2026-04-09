@@ -40,45 +40,19 @@ _command_exists() {
 	type "$1" &>/dev/null
 }
 
-# Detect netstat
-if _command_exists netstat; then
-	NETSTAT_BIN=$(which netstat)
-else
-	echo "ERROR: netstat binary not found."
-	exit 1
-fi
-
-# Detect curl
-if _command_exists curl; then
-	CURL_BIN=$(which curl)
-else
-	echo "ERROR: curl binary not found."
-	exit 1
-fi
-
-# Detect wget
-if _command_exists wget; then
-	WGET_BIN=$(which wget)
-else
-	echo "ERROR: wget binary not found."
-	exit 1
-fi
-
-# Detect tar
-if _command_exists tar; then
-	TAR_BIN=$(which tar)
-else
-	echo "ERROR: tar binary not found."
-	exit 1
-fi
-
-# Detect systemctl
-if _command_exists systemctl; then
-	SYSTEMCTL_BIN=$(which systemctl)
-else
-	echo "ERROR: systemctl binary not found."
-	exit 1
-fi
+# Checking the availability of necessary utilities
+COMMAND_EXIST_ARRAY=(JQ NETSTAT CURL WGET TAR SYSTEMCTL OPENSSL)
+for ((i=0; i<${#COMMAND_EXIST_ARRAY[@]}; i++)); do
+	__CMDVAR=${COMMAND_EXIST_ARRAY[$i]}
+	CMD_FIND=$(echo "${__CMDVAR}" | tr '[:upper:]' '[:lower:]')
+	if _command_exists ${CMD_FIND} ; then
+		eval $__CMDVAR'_BIN'="'$(which ${CMD_FIND})'"
+		hash "${CMD_FIND}" >/dev/null 2>&1
+	else
+		echo -e "ERROR: Command '${CMD_FIND}' not found."
+		exit 1
+	fi
+done
 
 # Detect pgrep
 if _command_exists pgrep; then
@@ -137,10 +111,15 @@ fi
 
 echo "Downloading latest version..."
 ${WGET_BIN} "https://github.com/telemt/telemt/releases/latest/download/telemt-$(uname -m)-linux-$(ldd --version 2>&1 | grep -iq musl && echo musl || echo gnu).tar.gz" -O "${SCRIPT_DIR}/${PROGRAM_NAME}.tar.gz" >/dev/null 2>&1
-if [ -f "${SCRIPT_DIR}/${PROGRAM_NAME}.tar.gz" ]; then
-	echo "Done"
-	echo "Extract ${PROGRAM_NAME}.tar.gz..."
-	${TAR_BIN} -zxf "${SCRIPT_DIR}/${PROGRAM_NAME}.tar.gz" >/dev/null 2>&1
+if [ $? -eq 0 ]; then
+	echo "Download complete."
+	if [ -f "${SCRIPT_DIR}/${PROGRAM_NAME}.tar.gz" ]; then
+		echo "Extract ${PROGRAM_NAME}.tar.gz..."
+		${TAR_BIN} -zxf "${SCRIPT_DIR}/${PROGRAM_NAME}.tar.gz" >/dev/null 2>&1
+	else
+		echo "ERROR: TeleMT archive not found. Exit..."
+		exit 1
+	fi
 	if [ -f "${SCRIPT_DIR}/${PROGRAM_NAME}" ]; then
 		echo "Stoping old Telemt..."
 		${SYSTEMCTL_BIN} stop ${PROGRAM_NAME} >/dev/null 2>&1
@@ -148,16 +127,21 @@ if [ -f "${SCRIPT_DIR}/${PROGRAM_NAME}.tar.gz" ]; then
 		yes | cp "${SCRIPT_DIR}/${PROGRAM_NAME}" "/usr/sbin/${PROGRAM_NAME}"
 		echo "Starting new Telemt..."
 		${SYSTEMCTL_BIN} start ${PROGRAM_NAME} >/dev/null 2>&1
+	else
+		echo "ERROR: TeleMT binary not found. Exit..."
+		exit 1
 	fi
 	echo "Remove ${PROGRAM_NAME}.tar.gz..."
 	rm -f "${SCRIPT_DIR}/${PROGRAM_NAME}.tar.gz" >/dev/null 2>&1
 	rm -rf "${SCRIPT_DIR}/${PROGRAM_NAME}" >/dev/null 2>&1
+	echo "Waiting 10 second..."
+	sleep 10
 	echo "Show logs:"
-	journalctl -u ${PROGRAM_NAME} -n 10 --no-pager
+	journalctl -u ${PROGRAM_NAME} -n 35 --no-pager
 	echo "Show netstat:"
 	${NETSTAT_BIN} -ltupn | grep LISTEN | grep ${PROGRAM_NAME}
-	echo "Show links:"
-	${CURL_BIN} -s http://127.0.0.1:9091/v1/users | ${JQ_BIN}
+	echo "Show connections links per user:"
+	${CURL_BIN} -s http://127.0.0.1:9091/v1/users | ${JQ_BIN} -r '.data[] | "User: \(.username)\n\(.links.tls[0] // empty)"'
 else
 	echo "ERROR: Download not completed. Exit..."
 	exit 1

@@ -30,21 +30,19 @@ _command_exists() {
 	type "$1" &>/dev/null
 }
 
-# Detect netstat
-if _command_exists netstat; then
-	NETSTAT_BIN=$(which netstat)
-else
-	echo "ERROR: netstat binary not found."
-	exit 1
-fi
-
-# Detect systemctl
-if _command_exists systemctl; then
-	SYSTEMCTL_BIN=$(which systemctl)
-else
-	echo "ERROR: systemctl binary not found."
-	exit 1
-fi
+# Checking the availability of necessary utilities
+COMMAND_EXIST_ARRAY=(NETSTAT SYSTEMCTL)
+for ((i=0; i<${#COMMAND_EXIST_ARRAY[@]}; i++)); do
+	__CMDVAR=${COMMAND_EXIST_ARRAY[$i]}
+	CMD_FIND=$(echo "${__CMDVAR}" | tr '[:upper:]' '[:lower:]')
+	if _command_exists ${CMD_FIND} ; then
+		eval $__CMDVAR'_BIN'="'$(which ${CMD_FIND})'"
+		hash "${CMD_FIND}" >/dev/null 2>&1
+	else
+		echo -e "ERROR: Command '${CMD_FIND}' not found."
+		exit 1
+	fi
+done
 
 # Detect pgrep
 if _command_exists pgrep; then

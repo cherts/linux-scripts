@@ -44,61 +44,19 @@ _command_exists() {
 	type "$1" &>/dev/null
 }
 
-# Detect netstat
-if _command_exists netstat; then
-	NETSTAT_BIN=$(which netstat)
-else
-	echo "ERROR: netstat binary not found."
-	exit 1
-fi
-
-# Detect jq
-if _command_exists jq; then
-	JQ_BIN=$(which jq)
-else
-	echo "ERROR: jq binary not found."
-	exit 1
-fi
-
-# Detect openssl
-if _command_exists openssl; then
-	OPENSSL_BIN=$(which openssl)
-else
-	echo "ERROR: openssl binary not found."
-	exit 1
-fi
-
-# Detect curl
-if _command_exists curl; then
-	CURL_BIN=$(which curl)
-else
-	echo "ERROR: curl binary not found."
-	exit 1
-fi
-
-# Detect wget
-if _command_exists wget; then
-	WGET_BIN=$(which wget)
-else
-	echo "ERROR: wget binary not found."
-	exit 1
-fi
-
-# Detect tar
-if _command_exists tar; then
-	TAR_BIN=$(which tar)
-else
-	echo "ERROR: tar binary not found."
-	exit 1
-fi
-
-# Detect systemctl
-if _command_exists systemctl; then
-	SYSTEMCTL_BIN=$(which systemctl)
-else
-	echo "ERROR: systemctl binary not found."
-	exit 1
-fi
+# Checking the availability of necessary utilities
+COMMAND_EXIST_ARRAY=(JQ NETSTAT CURL WGET TAR SYSTEMCTL OPENSSL)
+for ((i=0; i<${#COMMAND_EXIST_ARRAY[@]}; i++)); do
+	__CMDVAR=${COMMAND_EXIST_ARRAY[$i]}
+	CMD_FIND=$(echo "${__CMDVAR}" | tr '[:upper:]' '[:lower:]')
+	if _command_exists ${CMD_FIND} ; then
+		eval $__CMDVAR'_BIN'="'$(which ${CMD_FIND})'"
+		hash "${CMD_FIND}" >/dev/null 2>&1
+	else
+		echo -e "ERROR: Command '${CMD_FIND}' not found."
+		exit 1
+	fi
+done
 
 if _command_exists pgrep; then
 	PGREP_BIN=$(which pgrep)
@@ -188,12 +146,17 @@ fi
 
 echo "Downloading latest version..."
 ${WGET_BIN} "https://github.com/telemt/telemt/releases/latest/download/telemt-$(uname -m)-linux-$(ldd --version 2>&1 | grep -iq musl && echo musl || echo gnu).tar.gz" -O "${SCRIPT_DIR}/${PROGRAM_NAME}.tar.gz" >/dev/null 2>&1
-if [ -f "${SCRIPT_DIR}/${PROGRAM_NAME}.tar.gz" ]; then
-	echo "Done"
-	echo "Extract ${PROGRAM_NAME}.tar.gz..."
-	${TAR_BIN} -zxf "${SCRIPT_DIR}/${PROGRAM_NAME}.tar.gz" >/dev/null 2>&1
+if [ $? -eq 0 ]; then
+	echo "Download complete."
+	if [ -f "${SCRIPT_DIR}/${PROGRAM_NAME}.tar.gz" ]; then
+		echo "Extract ${PROGRAM_NAME}.tar.gz..."
+		${TAR_BIN} -zxf "${SCRIPT_DIR}/${PROGRAM_NAME}.tar.gz" >/dev/null 2>&1
+	else
+		echo "ERROR: TeleMT archive not found. Exit..."
+		exit 1
+	fi
 	if [ -f "${SCRIPT_DIR}/${PROGRAM_NAME}" ]; then
-		echo "Stoping old Telemt..."
+		echo "Stoping old TeleMT..."
 		${SYSTEMCTL_BIN} stop ${PROGRAM_NAME} >/dev/null 2>&1
 		echo "Install new binary..."
 		yes | cp "${SCRIPT_DIR}/${PROGRAM_NAME}" "/usr/sbin/${PROGRAM_NAME}"

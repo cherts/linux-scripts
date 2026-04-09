@@ -265,7 +265,7 @@ EOF
 	echo "Show netstat:"
 	${NETSTAT_BIN} -ltupn | grep LISTEN | grep ${PROGRAM_NAME}
 	echo "Show connections links per user:"
-	${CURL_BIN} -s http://127.0.0.1:9091/v1/users | ${JQ_BIN} -r '.data[] | "User: \(.username)\n\(.links.tls[0] // empty)"'
+	${CURL_BIN} -s http://127.0.0.1:9091/v1/users | ${JQ_BIN} -r '.data[] | "[\(.username)]", (.links.classic[]? | "classic: \(.)"), (.links.secure[]? | "secure: \(.)"), (.links.tls[]? | "tls: \(.)"), ""'
 else
 	echo "ERROR: Download not completed. Exit..."
 	exit 1

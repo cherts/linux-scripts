@@ -4,5 +4,5 @@
 
 Here is a set of simple scripts for automated installation/removal of various MTProto Proxy.
 
-- install_mtg.sh, uppdate_mtg.sh, remove_mtg.sh - Script for install, uppdate and remove [MTG Proxy](https://github.com/9seconds/mtg)
-- install_telemt.sh, uppdate_telemt.sh, remove_telemt.sh - Script for install, uppdate and remove [TeleMT Proxy](https://github.com/telemt/telemt)
+- install_mtg.sh, update_mtg.sh, remove_mtg.sh - Script for install, update and remove [MTG Proxy](https://github.com/9seconds/mtg)
+- install_telemt.sh, update_telemt.sh, remove_telemt.sh - Script for install, update and remove [TeleMT Proxy](https://github.com/telemt/telemt)

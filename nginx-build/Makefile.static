@@ -7,15 +7,15 @@
 # License: 2-Clause BSD (http://opensource.org/licenses/BSD-2-Clause)
 #
 
-NGINX_VERSION=1.29.3
-OPENSSL_VERSION=3.5.4
+NGINX_VERSION=1.31.0
+OPENSSL_VERSION=3.6.2
 PCRE2_VERSION=10.47
-ZLIB_VERSION=1.3.1
+ZLIB_VERSION=1.3.2
 
 # URL of nginx source tarball
 NGINX_SOURCE=https://nginx.org/download/nginx-${NGINX_VERSION}.tar.gz
 # URL of OpenSSL source tarball
-OPENSSL_SOURCE=https://www.openssl.org/source/openssl-${OPENSSL_VERSION}.tar.gz
+OPENSSL_SOURCE=https://github.com/openssl/openssl/releases/download/openssl-${OPENSSL_VERSION}/openssl-${OPENSSL_VERSION}.tar.gz
 # URL of PCRE source tarball
 PCRE2_SOURCE=https://github.com/PCRE2Project/pcre2/releases/download/pcre2-${PCRE2_VERSION}/pcre2-${PCRE2_VERSION}.tar.gz
 # URL of zlib source tarball

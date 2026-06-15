@@ -7,8 +7,8 @@
 # License: 2-Clause BSD (http://opensource.org/licenses/BSD-2-Clause)
 #
 
-NGINX_VERSION=1.31.0
-OPENSSL_VERSION=3.6.2
+NGINX_VERSION=1.31.1
+OPENSSL_VERSION=3.6.3
 PCRE2_VERSION=10.47
 ZLIB_VERSION=1.3.2
 

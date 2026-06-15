@@ -58,7 +58,7 @@ deps:
 endif
 
 clean:
-	rm -rf nginx openssl pcre zlib njs quickjs libxslt
+	rm -rf nginx openssl pcre zlib njs quickjs libxslt libxml2
 
 nginx.tar.gz:
 	wget -O $@ $(NGINX_SOURCE)

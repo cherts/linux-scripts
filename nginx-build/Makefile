@@ -7,9 +7,9 @@
 # License: 2-Clause BSD (http://opensource.org/licenses/BSD-2-Clause)
 #
 
-NGINX_VERSION=1.31.3
-OPENSSL_VERSION=3.6.3
-PCRE2_VERSION=10.47
+NGINX_VERSION=1.31.9
+OPENSSL_VERSION=3.6.5
+PCRE2_VERSION=10.49
 ZLIB_VERSION=1.3.2
 
 # URL of nginx source tarball
